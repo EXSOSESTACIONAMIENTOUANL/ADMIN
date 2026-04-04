@@ -15,8 +15,6 @@
         .btn-aprobar:hover { background: #009624; }
         .btn-rechazar { background: #ed4245; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%;}
         .btn-rechazar:hover { background: #b82a2d; }
-        .link-foto { display: inline-block; background: #007bff; color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; margin-bottom: 5px; font-size: 12px; }
-        .link-foto:hover { background: #0056b3; }
     </style>
 </head>
 <body>
@@ -47,15 +45,13 @@
         import { getFirestore, collection, getDocs, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
-
-  apiKey: "AIzaSyDr2FUS2IBW90alkYnAUUXvMNy2RQPjx6E",
-  authDomain: "ptueba-1-78027.firebaseapp.com",
-  projectId: "ptueba-1-78027",
-  storageBucket: "ptueba-1-78027.firebasestorage.app",
-  messagingSenderId: "463811943830",
-  appId: "1:463811943830:web:f529bdf1eea53445b0d1b7",
-  measurementId: "G-W5TBQT1DLK"
-
+            apiKey: "AIzaSyDr2FUS2IBW90alkYnAUUXvMNy2RQPjx6E",
+            authDomain: "ptueba-1-78027.firebaseapp.com",
+            projectId: "ptueba-1-78027",
+            storageBucket: "ptueba-1-78027.firebasestorage.app",
+            messagingSenderId: "463811943830",
+            appId: "1:463811943830:web:f529bdf1eea53445b0d1b7",
+            measurementId: "G-W5TBQT1DLK"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -87,8 +83,6 @@
                             <td>${datos.matricula || 'N/A'}</td>
                             <td>${datos.modeloAuto} <br> ${datos.colorAuto} (${datos.anioAuto})</td>
                             <td><strong>${datos.placas}</strong></td>
-                            <td>
-                            // NUEVO CÓDIGO PARA ADMIN.HTML (Para que se vean las fotos Base64)
                             <td style="text-align: center;">
                                 <div style="margin-bottom: 5px;">
                                     <span style="font-size: 10px; color: gray;">🚗 Carro:</span><br>
@@ -99,7 +93,6 @@
                                     <img src="${datos.ineUrl}" style="width: 80px; height: 50px; object-fit: cover; border-radius: 5px; border: 1px solid #ccc;" alt="INE">
                                 </div>
                             </td>
-                                                        </td>
                             <td>
                                 <button class="btn-aprobar" onclick="cambiarEstado('${idUsuario}', 'aprobado')">Aprobar</button>
                                 <button class="btn-rechazar" onclick="cambiarEstado('${idUsuario}', 'rechazado')">Rechazar</button>
