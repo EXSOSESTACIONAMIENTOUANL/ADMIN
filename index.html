@@ -43,7 +43,37 @@
         <img id="imagenAmpliada" src="" style="max-width:90%; max-height:90%; border-radius:10px; box-shadow:0 0 30px rgba(0,0,0,0.8);">
     </div>
 
-   
+    <div class="admin-container">
+        <h1>🛠️ Solicitudes Pendientes</h1>
+        <p class="subtitulo">Revisa documentos y datos antes de dar acceso.</p>
+        <table id="tablaUsuarios">
+            <thead>
+                <tr>
+                    <th>Usuario</th><th>Contacto</th><th>Matrícula</th><th>Vehículo</th><th>Placas</th><th>Documentos</th><th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla"></tbody>
+        </table>
+    </div>
+
+    <div class="admin-container">
+        <h1>👥 Usuarios Registrados</h1>
+        <p class="subtitulo">Gestiona el acceso de los usuarios que ya pasaron por revisión.</p>
+        
+        <div class="buscador-caja" style="margin-bottom: 15px;">
+            <label style="font-weight: bold; color: #152191;">Buscar por Placa:</label>
+            <input type="text" id="buscadorPlacas" placeholder="Ej. AAA-111-A" oninput="formatearPlacasBuscador(this); buscarPlacaRegistrados()" style="width: 250px; text-transform: uppercase;">
+        </div>
+
+        <table id="tablaAprobados">
+            <thead>
+                <tr>
+                    <th>Usuario</th><th>Contacto</th><th>Vehículo</th><th>Placas</th><th>Estado</th><th>Documentos</th><th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTablaAprobados"></tbody>
+        </table>
+    </div>
 
     <div class="admin-container">
         <h1>🚗 Solicitudes de Cambio de Vehículo</h1>
@@ -57,18 +87,7 @@
             <tbody id="cuerpoTablaCambios"></tbody>
         </table>
     </div>
-     <div class="admin-container">
-        <h1>🛠️ Solicitudes Pendientes</h1>
-        <p class="subtitulo">Revisa documentos y datos antes de dar acceso.</p>
-        <table id="tablaUsuarios">
-            <thead>
-                <tr>
-                    <th>Usuario</th><th>Contacto</th><th>Matrícula</th><th>Vehículo</th><th>Placas</th><th>Documentos</th><th>Acción</th>
-                </tr>
-            </thead>
-            <tbody id="cuerpoTabla"></tbody>
-        </table>
-    </div>
+
     <div class="admin-container">
         <h1>📋 Bitácora de Accesos</h1>
         <p class="subtitulo">Visualiza los últimos 5 movimientos o usa el buscador para una fecha y hora específica.</p>
@@ -99,30 +118,10 @@
         </table>
     </div>
 
-
-    <div class="admin-container">
-        <h1>👥 Usuarios Registrados</h1>
-        <p class="subtitulo">Gestiona el acceso de los usuarios que ya pasaron por revisión.</p>
-        
-        <div class="buscador-caja" style="margin-bottom: 15px;">
-            <label style="font-weight: bold; color: #152191;">Buscar por Placa:</label>
-            <input type="text" id="buscadorPlacas" placeholder="Ej. AAA-111-A" oninput="formatearPlacasBuscador(this); buscarPlacaRegistrados()" style="width: 250px; text-transform: uppercase;">
-        </div>
-
-        <table id="tablaAprobados">
-            <thead>
-                <tr>
-                    <th>Usuario</th><th>Contacto</th><th>Vehículo</th><th>Placas</th><th>Estado</th><th>Documentos</th><th>Acción</th>
-                </tr>
-            </thead>
-            <tbody id="cuerpoTablaAprobados"></tbody>
-        </table>
-    </div>
-    
-
     <script type="module">
+        // 🔥 IMPORTAMOS onSnapshot PARA EL TIEMPO REAL 🔥
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDr2FUS2IBW90alkYnAUUXvMNy2RQPjx6E",
@@ -142,7 +141,6 @@
             document.getElementById('visorImagen').style.display = 'flex';
         };
 
-        // 🔥 FUNCIÓN PARA FORMATEAR LAS PLACAS EN EL BUSCADOR 🔥
         window.formatearPlacasBuscador = function(input) {
             let valor = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
             let formateado = '';
@@ -152,14 +150,12 @@
             input.value = formateado;
         };
 
-        // 🔥 FUNCIÓN PARA BUSCAR POR PLACAS EN TIEMPO REAL 🔥
         window.buscarPlacaRegistrados = function() {
             const input = document.getElementById("buscadorPlacas").value.toUpperCase();
             const tabla = document.getElementById("cuerpoTablaAprobados");
             const filas = tabla.getElementsByTagName("tr");
 
             for (let i = 0; i < filas.length; i++) {
-                // La columna de Placas es la número 4 (índice 3)
                 const celdaPlaca = filas[i].getElementsByTagName("td")[3];
                 if (celdaPlaca) {
                     const textoPlaca = celdaPlaca.textContent || celdaPlaca.innerText;
@@ -172,12 +168,14 @@
             }
         }
 
-        async function cargarPendientes() {
+        // 🔥 CARGA EN TIEMPO REAL: PENDIENTES 🔥
+        function cargarPendientes() {
             const tabla = document.getElementById("cuerpoTabla");
             tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Cargando...</td></tr>";
-            try {
-                const q = query(collection(db, "usuarios"), where("estado", "==", "pendiente"));
-                const querySnapshot = await getDocs(q);
+            
+            const q = query(collection(db, "usuarios"), where("estado", "==", "pendiente"));
+            
+            onSnapshot(q, (querySnapshot) => {
                 tabla.innerHTML = ""; 
                 if (querySnapshot.empty) { tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No hay pendientes.</td></tr>"; return; }
                 querySnapshot.forEach((documento) => {
@@ -185,15 +183,17 @@
                     const fila = crearFilaPendiente(datos, documento.id);
                     tabla.innerHTML += fila;
                 });
-            } catch (error) {}
+            });
         }
 
-        async function cargarRegistrados() {
+        // 🔥 CARGA EN TIEMPO REAL: REGISTRADOS 🔥
+        function cargarRegistrados() {
             const tabla = document.getElementById("cuerpoTablaAprobados");
             tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Cargando...</td></tr>";
-            try {
-                const q = query(collection(db, "usuarios"), where("estado", "in", ["aprobado", "inhabilitado"]));
-                const querySnapshot = await getDocs(q);
+            
+            const q = query(collection(db, "usuarios"), where("estado", "in", ["aprobado", "inhabilitado"]));
+            
+            onSnapshot(q, (querySnapshot) => {
                 tabla.innerHTML = ""; 
                 if (querySnapshot.empty) { tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No hay usuarios.</td></tr>"; return; }
                 querySnapshot.forEach((documento) => {
@@ -201,7 +201,10 @@
                     const fila = crearFilaRegistrado(datos, documento.id);
                     tabla.innerHTML += fila;
                 });
-            } catch (error) {}
+                
+                // Mantenemos el filtro de búsqueda aplicado si la tabla se actualiza sola
+                buscarPlacaRegistrados(); 
+            });
         }
 
         function crearFilaPendiente(datos, idUsuario) {
@@ -227,25 +230,28 @@
         window.cambiarEstado = async function(id, nuevoEstado) {
             if(confirm(`¿Seguro de marcar este usuario como ${nuevoEstado.toUpperCase()}?`)) {
                 await updateDoc(doc(db, "usuarios", id), { estado: nuevoEstado });
-                cargarPendientes(); cargarRegistrados();
+                // Ya no necesitamos llamar a cargarPendientes() aquí, onSnapshot lo hace solo.
             }
         }
 
-        async function cargarSolicitudesAuto() {
+        // 🔥 CARGA EN TIEMPO REAL: SOLICITUDES DE AUTO 🔥
+        function cargarSolicitudesAuto() {
             const tabla = document.getElementById("cuerpoTablaCambios");
             const q = query(collection(db, "usuarios"), where("solicitudCarro.estado", "==", "pendiente"));
-            const qs = await getDocs(q);
-            tabla.innerHTML = ""; 
-            if (qs.empty) { tabla.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No hay solicitudes.</td></tr>"; return; }
-            qs.forEach((documento) => {
-                const d = documento.data(); const req = d.solicitudCarro;
-                tabla.innerHTML += `<tr style="background-color: #fff9e6;">
-                        <td><strong>${d.nombre}</strong><br>${d.correo}</td>
-                        <td style="color: gray;">${d.modeloAuto} (${d.colorAuto})<br>Placas: ${d.placas}</td>
-                        <td style="color: #152191; font-weight: bold;">${req.modelo} (${req.color})<br>Año: ${req.anio}<br>Placas: ${req.placas}</td>
-                        <td style="text-align: center;"><img src="${req.fotoUrl}" class="img-zoom" onclick="verImagen('${req.fotoUrl}')"></td>
-                        <td><button class="btn-aprobar" onclick="aprobarCambioAuto('${documento.id}')">✅ Aprobar Cambio</button><button class="btn-rechazar" onclick="rechazarCambioAuto('${documento.id}')">❌ Rechazar</button></td>
-                    </tr>`;
+            
+            onSnapshot(q, (qs) => {
+                tabla.innerHTML = ""; 
+                if (qs.empty) { tabla.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No hay solicitudes.</td></tr>"; return; }
+                qs.forEach((documento) => {
+                    const d = documento.data(); const req = d.solicitudCarro;
+                    tabla.innerHTML += `<tr style="background-color: #fff9e6;">
+                            <td><strong>${d.nombre}</strong><br>${d.correo}</td>
+                            <td style="color: gray;">${d.modeloAuto} (${d.colorAuto})<br>Placas: ${d.placas}</td>
+                            <td style="color: #152191; font-weight: bold;">${req.modelo} (${req.color})<br>Año: ${req.anio}<br>Placas: ${req.placas}</td>
+                            <td style="text-align: center;"><img src="${req.fotoUrl}" class="img-zoom" onclick="verImagen('${req.fotoUrl}')"></td>
+                            <td><button class="btn-aprobar" onclick="aprobarCambioAuto('${documento.id}')">✅ Aprobar Cambio</button><button class="btn-rechazar" onclick="rechazarCambioAuto('${documento.id}')">❌ Rechazar</button></td>
+                        </tr>`;
+                });
             });
         }
 
@@ -258,7 +264,6 @@
                         modeloAuto: req.modelo, colorAuto: req.color, anioAuto: req.anio,
                         placas: req.placas, fotoCarroUrl: req.fotoUrl, "solicitudCarro.estado": "aprobado"
                     });
-                    cargarSolicitudesAuto(); cargarRegistrados();
                 }
             }
         }
@@ -266,27 +271,32 @@
         window.rechazarCambioAuto = async function(id) {
             if(confirm("¿RECHAZAR solicitud?")) {
                 await updateDoc(doc(db, "usuarios", id), { "solicitudCarro.estado": "rechazado" });
-                cargarSolicitudesAuto();
             }
         }
 
-        // LÓGICA DEL BUSCADOR DE HISTORIAL
-        window.buscarHistorial = async function(esLimpieza = false) {
+        // 🔥 CARGA EN TIEMPO REAL: HISTORIAL 🔥
+        let vigilanteHistorial = null; // Variable para apagar y prender la cámara del historial
+
+        window.buscarHistorial = function(esLimpieza = false) {
             const tabla = document.getElementById("cuerpoTablaHistorial");
             tabla.innerHTML = "<tr><td colspan='5' style='text-align:center;'>Cargando historial...</td></tr>";
 
             const fecha = document.getElementById("filtroFecha").value;
             const hora = document.getElementById("filtroHora").value;
 
-            try {
-                let q;
-                if (!esLimpieza && (fecha || hora)) {
-                    q = query(collection(db, "historial_estacionamiento"), orderBy("timestampEntrada", "desc"));
-                } else {
-                    q = query(collection(db, "historial_estacionamiento"), orderBy("timestampEntrada", "desc"), limit(5));
-                }
+            let q;
+            if (!esLimpieza && (fecha || hora)) {
+                q = query(collection(db, "historial_estacionamiento"), orderBy("timestampEntrada", "desc"));
+            } else {
+                q = query(collection(db, "historial_estacionamiento"), orderBy("timestampEntrada", "desc"), limit(5));
+            }
 
-                const querySnapshot = await getDocs(q);
+            // Si ya estábamos vigilando el historial, apagamos la cámara anterior para poner una nueva con los filtros
+            if (vigilanteHistorial) {
+                vigilanteHistorial(); 
+            }
+
+            vigilanteHistorial = onSnapshot(q, (querySnapshot) => {
                 tabla.innerHTML = ""; 
                 let mostrados = 0;
 
@@ -321,11 +331,7 @@
                 if(mostrados === 0) {
                     tabla.innerHTML = "<tr><td colspan='5' style='text-align:center; color:red;'>No se encontraron registros para esa fecha/hora.</td></tr>";
                 }
-
-            } catch (error) {
-                console.log(error);
-                tabla.innerHTML = "<tr><td colspan='5' style='text-align:center;'>Aún no hay historial registrado.</td></tr>";
-            }
+            });
         }
 
         window.limpiarHistorial = function() {
@@ -334,6 +340,7 @@
             buscarHistorial(true);
         }
 
+        // Ejecutar funciones de arranque
         cargarPendientes();
         cargarRegistrados();
         cargarSolicitudesAuto();
