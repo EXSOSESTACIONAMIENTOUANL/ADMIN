@@ -34,6 +34,8 @@
             transform: scale(1.1); 
             border-color: #152191;
         }
+        .estado-activo { color: #00c853; font-weight: bold; }
+        .estado-inactivo { color: #ed4245; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -65,17 +67,17 @@
     </div>
 
     <div class="admin-container">
-        <h1>✅ Usuarios Aprobados (Activos)</h1>
-        <p class="subtitulo">Usuarios con acceso al estacionamiento. Puedes inhabilitarlos aquí.</p>
+        <h1>👥 Usuarios Registrados</h1>
+        <p class="subtitulo">Gestiona el acceso de los usuarios que ya pasaron por revisión.</p>
         
         <table id="tablaAprobados">
             <thead>
                 <tr>
                     <th>Usuario</th>
                     <th>Contacto</th>
-                    <th>Matrícula</th>
                     <th>Vehículo</th>
                     <th>Placas</th>
+                    <th>Estado</th>
                     <th>Documentos</th>
                     <th>Acción</th>
                 </tr>
@@ -89,6 +91,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+        // NOTA: Asegúrate de que este sea el proyecto correcto (exsos-pruebas o ptueba-1)
         const firebaseConfig = {
             apiKey: "AIzaSyDr2FUS2IBW90alkYnAUUXvMNy2RQPjx6E",
             authDomain: "ptueba-1-78027.firebaseapp.com",
@@ -102,7 +105,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Abrir imagen
         window.verImagen = function(url) {
             document.getElementById('imagenAmpliada').src = url;
             document.getElementById('visorImagen').style.display = 'flex';
@@ -117,13 +119,13 @@
                 const querySnapshot = await getDocs(q);
                 tabla.innerHTML = ""; 
                 if (querySnapshot.empty) {
-                    tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No hay usuarios pendientes de aprobar. 🎉</td></tr>";
+                    tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No hay usuarios pendientes. 🎉</td></tr>";
                     return;
                 }
                 querySnapshot.forEach((documento) => {
                     const datos = documento.data();
                     const idUsuario = documento.id;
-                    const fila = crearFilaHTML(datos, idUsuario, 'pendiente');
+                    const fila = crearFilaPendiente(datos, idUsuario);
                     tabla.innerHTML += fila;
                 });
             } catch (error) {
@@ -131,22 +133,23 @@
             }
         }
 
-        // CARGAR APROBADOS
-        async function cargarAprobados() {
+        // CARGAR APROBADOS E INHABILITADOS
+        async function cargarRegistrados() {
             const tabla = document.getElementById("cuerpoTablaAprobados");
-            tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Cargando usuarios activos...</td></tr>";
+            tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Cargando usuarios...</td></tr>";
             try {
-                const q = query(collection(db, "usuarios"), where("estado", "==", "aprobado"));
+                // Traemos a los aprobados y a los inhabilitados
+                const q = query(collection(db, "usuarios"), where("estado", "in", ["aprobado", "inhabilitado"]));
                 const querySnapshot = await getDocs(q);
                 tabla.innerHTML = ""; 
                 if (querySnapshot.empty) {
-                    tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No hay usuarios aprobados registrados.</td></tr>";
+                    tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No hay usuarios registrados.</td></tr>";
                     return;
                 }
                 querySnapshot.forEach((documento) => {
                     const datos = documento.data();
                     const idUsuario = documento.id;
-                    const fila = crearFilaHTML(datos, idUsuario, 'aprobado');
+                    const fila = crearFilaRegistrado(datos, idUsuario);
                     tabla.innerHTML += fila;
                 });
             } catch (error) {
@@ -154,21 +157,7 @@
             }
         }
 
-        // Generador de filas (Para no repetir código)
-        function crearFilaHTML(datos, idUsuario, tipo) {
-            let botonesAccion = "";
-            
-            if (tipo === 'pendiente') {
-                botonesAccion = `
-                    <button class="btn-aprobar" onclick="cambiarEstado('${idUsuario}', 'aprobado')">✅ Aprobar</button>
-                    <button class="btn-rechazar" onclick="cambiarEstado('${idUsuario}', 'rechazado')">❌ Rechazar</button>
-                `;
-            } else if (tipo === 'aprobado') {
-                botonesAccion = `
-                    <button class="btn-inhabilitar" onclick="cambiarEstado('${idUsuario}', 'inhabilitado')">🚫 Inhabilitar</button>
-                `;
-            }
-
+        function crearFilaPendiente(datos, idUsuario) {
             return `
                 <tr>
                     <td><strong>${datos.nombre}</strong><br><span style="color:gray; font-size:12px;">Nacimiento: ${datos.fechaNacimiento}</span></td>
@@ -177,41 +166,65 @@
                     <td>${datos.modeloAuto} <br> ${datos.colorAuto} (${datos.anioAuto})</td>
                     <td><strong>${datos.placas}</strong></td>
                     <td style="text-align: center;">
-                        <div style="margin-bottom: 5px;">
-                            <img src="${datos.fotoCarroUrl}" class="img-zoom" onclick="verImagen('${datos.fotoCarroUrl}')" title="Ver Carro">
-                        </div>
-                        <div>
-                            <img src="${datos.ineUrl}" class="img-zoom" onclick="verImagen('${datos.ineUrl}')" title="Ver INE">
-                        </div>
+                        <img src="${datos.fotoCarroUrl}" class="img-zoom" onclick="verImagen('${datos.fotoCarroUrl}')" title="Ver Carro">
+                        <img src="${datos.ineUrl}" class="img-zoom" onclick="verImagen('${datos.ineUrl}')" title="Ver INE">
                     </td>
-                    <td>${botonesAccion}</td>
+                    <td>
+                        <button class="btn-aprobar" onclick="cambiarEstado('${idUsuario}', 'aprobado')">✅ Aprobar</button>
+                        <button class="btn-rechazar" onclick="cambiarEstado('${idUsuario}', 'rechazado')">❌ Rechazar</button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function crearFilaRegistrado(datos, idUsuario) {
+            let badgeEstado = "";
+            let botonAccion = "";
+
+            if (datos.estado === "aprobado") {
+                badgeEstado = "<span class='estado-activo'>ACTIVO</span>";
+                botonAccion = `<button class="btn-inhabilitar" onclick="cambiarEstado('${idUsuario}', 'inhabilitado')">🚫 Inhabilitar</button>`;
+            } else if (datos.estado === "inhabilitado") {
+                badgeEstado = "<span class='estado-inactivo'>INHABILITADO</span>";
+                botonAccion = `<button class="btn-aprobar" onclick="cambiarEstado('${idUsuario}', 'aprobado')">✅ Reactivar</button>`;
+            }
+
+            return `
+                <tr style="background-color: ${datos.estado === 'inhabilitado' ? '#ffebee' : 'transparent'};">
+                    <td><strong>${datos.nombre}</strong><br><span style="color:gray; font-size:12px;">Matrícula: ${datos.matricula || 'N/A'}</span></td>
+                    <td>${datos.correo}<br>${datos.telefono}</td>
+                    <td>${datos.modeloAuto} (${datos.colorAuto})</td>
+                    <td><strong>${datos.placas}</strong></td>
+                    <td>${badgeEstado}</td>
+                    <td style="text-align: center;">
+                        <img src="${datos.fotoCarroUrl}" class="img-zoom" onclick="verImagen('${datos.fotoCarroUrl}')" title="Ver Carro">
+                        <img src="${datos.ineUrl}" class="img-zoom" onclick="verImagen('${datos.ineUrl}')" title="Ver INE">
+                    </td>
+                    <td>${botonAccion}</td>
                 </tr>
             `;
         }
 
         // CAMBIAR ESTADO EN FIREBASE
         window.cambiarEstado = async function(id, nuevoEstado) {
-            let mensajeConfirmacion = `¿Estás seguro de marcar este usuario como ${nuevoEstado.toUpperCase()}?`;
+            let mensaje = `¿Estás seguro de marcar este usuario como ${nuevoEstado.toUpperCase()}?`;
             if(nuevoEstado === 'inhabilitado') {
-                mensajeConfirmacion = "¿Estás seguro de INHABILITAR a este usuario? Ya no podrá acceder a la plataforma.";
+                mensaje = "⚠️ ¿INHABILITAR cuenta? El usuario será expulsado inmediatamente y no podrá entrar.";
             }
 
-            if(confirm(mensajeConfirmacion)) {
+            if(confirm(mensaje)) {
                 try {
                     await updateDoc(doc(db, "usuarios", id), { estado: nuevoEstado });
-                    
-                    // Recargamos ambas tablas para que el usuario cambie de sección en vivo
                     cargarPendientes(); 
-                    cargarAprobados();
+                    cargarRegistrados();
                 } catch (error) {
                     alert("Error: " + error.message);
                 }
             }
         }
 
-        // Iniciar las dos tablas
         cargarPendientes();
-        cargarAprobados();
+        cargarRegistrados();
     </script>
 </body>
 </html>
