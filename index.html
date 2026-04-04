@@ -1,0 +1,44 @@
+// --- LOGIN ---
+function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const remember = document.getElementById("remember").checked;
+
+    if(!email || !password) return mostrarMensaje("mensajeLogin", "Ingresa datos");
+
+    const persistence = remember ? browserLocalPersistence : browserSessionPersistence;
+
+    setPersistence(auth, persistence)
+        .then(() => signInWithEmailAndPassword(auth, email, password))
+        .then(async (userCredential) => {
+            const user = userCredential.user;
+            
+            if (!user.emailVerified) {
+                await signOut(auth);
+                return mostrarMensaje("mensajeLogin", "Verifica tu correo primero.");
+            }
+
+            // 🔥 VERIFICAR EL ESTADO EN FIRESTORE
+            const docRef = doc(db, "usuarios", user.uid);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const estado = docSnap.data().estado;
+                
+                if (estado === "pendiente") {
+                    await signOut(auth); 
+                    return mostrarMensaje("mensajeLogin", "⏳ Tu cuenta sigue en proceso de validación (24h).");
+                } 
+                else if (estado === "rechazado") {
+                    await signOut(auth); 
+                    return mostrarMensaje("mensajeLogin", "❌ Tu cuenta fue rechazada. Verifica tus datos.");
+                }
+            } else {
+                await signOut(auth);
+                return mostrarMensaje("mensajeLogin", "Error: Cuenta no encontrada.");
+            }
+
+            // Si pasa todo, el onAuthStateChanged lo mandará a Home.html
+        })
+        .catch(() => mostrarMensaje("mensajeLogin", "Credenciales incorrectas"));
+}
