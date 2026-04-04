@@ -85,9 +85,18 @@
                             <td>${datos.modeloAuto} <br> ${datos.colorAuto} (${datos.anioAuto})</td>
                             <td><strong>${datos.placas}</strong></td>
                             <td>
-                                <a href="${datos.fotoCarroUrl}" target="_blank" class="link-foto">🚗 Ver Carro</a><br>
-                                <a href="${datos.ineUrl}" target="_blank" class="link-foto">🪪 Ver INE</a>
+                            // NUEVO CÓDIGO PARA ADMIN.HTML (Para que se vean las fotos Base64)
+                            <td style="text-align: center;">
+                                <div style="margin-bottom: 5px;">
+                                    <span style="font-size: 10px; color: gray;">🚗 Carro:</span><br>
+                                    <img src="${datos.fotoCarroUrl}" style="width: 80px; height: 50px; object-fit: cover; border-radius: 5px; border: 1px solid #ccc;" alt="Carro">
+                                </div>
+                                <div>
+                                    <span style="font-size: 10px; color: gray;">🪪 INE:</span><br>
+                                    <img src="${datos.ineUrl}" style="width: 80px; height: 50px; object-fit: cover; border-radius: 5px; border: 1px solid #ccc;" alt="INE">
+                                </div>
                             </td>
+                                                        </td>
                             <td>
                                 <button class="btn-aprobar" onclick="cambiarEstado('${idUsuario}', 'aprobado')">Aprobar</button>
                                 <button class="btn-rechazar" onclick="cambiarEstado('${idUsuario}', 'rechazado')">Rechazar</button>
