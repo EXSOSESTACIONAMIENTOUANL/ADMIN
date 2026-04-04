@@ -1,44 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Administrador EXSOS</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; padding: 20px; }
+        .admin-container { max-width: 1200px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow-x: auto; }
+        h1 { color: #152191; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #152191; color: white; }
+        .badge-pendiente { background: #FFD400; color: #152191; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 12px; }
+        .btn-aprobar { background: #00c853; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 5px; width: 100%;}
+        .btn-aprobar:hover { background: #009624; }
+        .btn-rechazar { background: #ed4245; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%;}
+        .btn-rechazar:hover { background: #b82a2d; }
+        .link-foto { display: inline-block; background: #007bff; color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; margin-bottom: 5px; font-size: 12px; }
+        .link-foto:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
 
-function login() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    const remember = document.getElementById("remember").checked;
+    <div class="admin-container">
+        <h1>🛠️ Solicitudes Pendientes EXSOS</h1>
+        <p style="text-align:center;">Revisa documentos, placas y datos antes de dar acceso.</p>
+        
+        <table id="tablaUsuarios">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Contacto</th>
+                    <th>Matrícula</th>
+                    <th>Vehículo</th>
+                    <th>Placas</th>
+                    <th>Documentos</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla">
+            </tbody>
+        </table>
+    </div>
 
-    if(!email || !password) return mostrarMensaje("mensajeLogin", "Ingresa datos");
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const persistence = remember ? browserLocalPersistence : browserSessionPersistence;
+        const firebaseConfig = {
+            apiKey: "AIzaSyCjlT5tS1iEWvYzSIHRzg3jQLnyq5AAFJk",
+            authDomain: "exsos-pruebas.firebaseapp.com",
+            projectId: "exsos-pruebas",
+            storageBucket: "exsos-pruebas.firebasestorage.app",
+            messagingSenderId: "564255524295",
+            appId: "1:564255524295:web:ae4160b7a56304e6acc5e2"
+        };
 
-    setPersistence(auth, persistence)
-        .then(() => signInWithEmailAndPassword(auth, email, password))
-        .then(async (userCredential) => {
-            const user = userCredential.user;
-            
-            if (!user.emailVerified) {
-                await signOut(auth);
-                return mostrarMensaje("mensajeLogin", "Verifica tu correo primero.");
-            }
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-            // 🔥 VERIFICAR EL ESTADO EN FIRESTORE
-            const docRef = doc(db, "usuarios", user.uid);
-            const docSnap = await getDoc(docRef);
+        async function cargarPendientes() {
+            const tabla = document.getElementById("cuerpoTabla");
+            tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Cargando solicitudes...</td></tr>";
 
-            if (docSnap.exists()) {
-                const estado = docSnap.data().estado;
+            try {
+                const q = query(collection(db, "usuarios"), where("estado", "==", "pendiente"));
+                const querySnapshot = await getDocs(q);
                 
-                if (estado === "pendiente") {
-                    await signOut(auth); 
-                    return mostrarMensaje("mensajeLogin", "⏳ Tu cuenta sigue en proceso de validación (24h).");
-                } 
-                else if (estado === "rechazado") {
-                    await signOut(auth); 
-                    return mostrarMensaje("mensajeLogin", "❌ Tu cuenta fue rechazada. Verifica tus datos.");
-                }
-            } else {
-                await signOut(auth);
-                return mostrarMensaje("mensajeLogin", "Error: Cuenta no encontrada.");
-            }
+                tabla.innerHTML = ""; 
 
-            // Si pasa todo, el onAuthStateChanged lo mandará a Home.html
-        })
-        .catch(() => mostrarMensaje("mensajeLogin", "Credenciales incorrectas"));
-}
+                if (querySnapshot.empty) {
+                    tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No hay usuarios pendientes de aprobar. 🎉</td></tr>";
+                    return;
+                }
+
+                querySnapshot.forEach((documento) => {
+                    const datos = documento.data();
+                    const idUsuario = documento.id;
+
+                    const fila = `
+                        <tr>
+                            <td><strong>${datos.nombre}</strong><br><span style="color:gray; font-size:12px;">Nacimiento: ${datos.fechaNacimiento}</span></td>
+                            <td>${datos.correo}<br>${datos.telefono}</td>
+                            <td>${datos.matricula || 'N/A'}</td>
+                            <td>${datos.modeloAuto} <br> ${datos.colorAuto} (${datos.anioAuto})</td>
+                            <td><strong>${datos.placas}</strong></td>
+                            <td>
+                                <a href="${datos.fotoCarroUrl}" target="_blank" class="link-foto">🚗 Ver Carro</a><br>
+                                <a href="${datos.ineUrl}" target="_blank" class="link-foto">🪪 Ver INE</a>
+                            </td>
+                            <td>
+                                <button class="btn-aprobar" onclick="cambiarEstado('${idUsuario}', 'aprobado')">Aprobar</button>
+                                <button class="btn-rechazar" onclick="cambiarEstado('${idUsuario}', 'rechazado')">Rechazar</button>
+                            </td>
+                        </tr>
+                    `;
+                    tabla.innerHTML += fila;
+                });
+            } catch (error) {
+                console.error(error);
+                tabla.innerHTML = "<tr><td colspan='7' style='text-align:center; color:red;'>Error al cargar los datos.</td></tr>";
+            }
+        }
+
+        window.cambiarEstado = async function(id, nuevoEstado) {
+            if(confirm(`¿Marcar este usuario como ${nuevoEstado.toUpperCase()}?`)) {
+                try {
+                    await updateDoc(doc(db, "usuarios", id), { estado: nuevoEstado });
+                    alert(`✅ Usuario ${nuevoEstado} correctamente.`);
+                    cargarPendientes(); 
+                } catch (error) {
+                    alert("Error: " + error.message);
+                }
+            }
+        }
+
+        cargarPendientes();
+    </script>
+</body>
+</html>
