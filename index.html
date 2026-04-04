@@ -55,26 +55,6 @@
             <tbody id="cuerpoTabla"></tbody>
         </table>
     </div>
-
-    <div class="admin-container">
-        <h1>👥 Usuarios Registrados</h1>
-        <p class="subtitulo">Gestiona el acceso de los usuarios que ya pasaron por revisión.</p>
-        
-        <div class="buscador-caja" style="margin-bottom: 15px;">
-            <label style="font-weight: bold; color: #152191;">Buscar por Placa:</label>
-            <input type="text" id="buscadorPlacas" placeholder="Ej. AAA-111-A" oninput="formatearPlacasBuscador(this); buscarPlacaRegistrados()" style="width: 250px; text-transform: uppercase;">
-        </div>
-
-        <table id="tablaAprobados">
-            <thead>
-                <tr>
-                    <th>Usuario</th><th>Contacto</th><th>Vehículo</th><th>Placas</th><th>Estado</th><th>Documentos</th><th>Acción</th>
-                </tr>
-            </thead>
-            <tbody id="cuerpoTablaAprobados"></tbody>
-        </table>
-    </div>
-
     <div class="admin-container">
         <h1>🚗 Solicitudes de Cambio de Vehículo</h1>
         <p class="subtitulo">Usuarios activos solicitando actualizar su auto en el sistema.</p>
@@ -87,7 +67,7 @@
             <tbody id="cuerpoTablaCambios"></tbody>
         </table>
     </div>
-
+    
     <div class="admin-container">
         <h1>📋 Bitácora de Accesos</h1>
         <p class="subtitulo">Visualiza los últimos 5 movimientos o usa el buscador para una fecha y hora específica.</p>
@@ -117,6 +97,28 @@
             </tbody>
         </table>
     </div>
+    
+    <div class="admin-container">
+        <h1>👥 Usuarios Registrados</h1>
+        <p class="subtitulo">Gestiona el acceso de los usuarios que ya pasaron por revisión.</p>
+        
+        <div class="buscador-caja" style="margin-bottom: 15px;">
+            <label style="font-weight: bold; color: #152191;">Buscar por Placa:</label>
+            <input type="text" id="buscadorPlacas" placeholder="Ej. AAA-111-A" oninput="formatearPlacasBuscador(this); buscarPlacaRegistrados()" style="width: 250px; text-transform: uppercase;">
+        </div>
+
+        <table id="tablaAprobados">
+            <thead>
+                <tr>
+                    <th>Usuario</th><th>Contacto</th><th>Vehículo</th><th>Placas</th><th>Estado</th><th>Documentos</th><th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTablaAprobados"></tbody>
+        </table>
+    </div>
+
+
+
 
     <script type="module">
         // 🔥 IMPORTAMOS onSnapshot PARA EL TIEMPO REAL 🔥
