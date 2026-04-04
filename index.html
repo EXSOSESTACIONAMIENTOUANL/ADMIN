@@ -43,37 +43,7 @@
         <img id="imagenAmpliada" src="" style="max-width:90%; max-height:90%; border-radius:10px; box-shadow:0 0 30px rgba(0,0,0,0.8);">
     </div>
 
-    <div class="admin-container">
-        <h1>🛠️ Solicitudes Pendientes</h1>
-        <p class="subtitulo">Revisa documentos y datos antes de dar acceso.</p>
-        <table id="tablaUsuarios">
-            <thead>
-                <tr>
-                    <th>Usuario</th><th>Contacto</th><th>Matrícula</th><th>Vehículo</th><th>Placas</th><th>Documentos</th><th>Acción</th>
-                </tr>
-            </thead>
-            <tbody id="cuerpoTabla"></tbody>
-        </table>
-    </div>
-
-    <div class="admin-container">
-        <h1>👥 Usuarios Registrados</h1>
-        <p class="subtitulo">Gestiona el acceso de los usuarios que ya pasaron por revisión.</p>
-        
-        <div class="buscador-caja" style="margin-bottom: 15px;">
-            <label style="font-weight: bold; color: #152191;">Buscar por Placa:</label>
-            <input type="text" id="buscadorPlacas" placeholder="Ej. AAA-111-A" onkeyup="buscarPlacaRegistrados()" style="width: 250px; text-transform: uppercase;">
-        </div>
-
-        <table id="tablaAprobados">
-            <thead>
-                <tr>
-                    <th>Usuario</th><th>Contacto</th><th>Vehículo</th><th>Placas</th><th>Estado</th><th>Documentos</th><th>Acción</th>
-                </tr>
-            </thead>
-            <tbody id="cuerpoTablaAprobados"></tbody>
-        </table>
-    </div>
+   
 
     <div class="admin-container">
         <h1>🚗 Solicitudes de Cambio de Vehículo</h1>
@@ -117,6 +87,38 @@
             </tbody>
         </table>
     </div>
+     <div class="admin-container">
+        <h1>🛠️ Solicitudes Pendientes</h1>
+        <p class="subtitulo">Revisa documentos y datos antes de dar acceso.</p>
+        <table id="tablaUsuarios">
+            <thead>
+                <tr>
+                    <th>Usuario</th><th>Contacto</th><th>Matrícula</th><th>Vehículo</th><th>Placas</th><th>Documentos</th><th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla"></tbody>
+        </table>
+    </div>
+
+    <div class="admin-container">
+        <h1>👥 Usuarios Registrados</h1>
+        <p class="subtitulo">Gestiona el acceso de los usuarios que ya pasaron por revisión.</p>
+        
+        <div class="buscador-caja" style="margin-bottom: 15px;">
+            <label style="font-weight: bold; color: #152191;">Buscar por Placa:</label>
+            <input type="text" id="buscadorPlacas" placeholder="Ej. AAA-111-A" oninput="formatearPlacasBuscador(this); buscarPlacaRegistrados()" style="width: 250px; text-transform: uppercase;">
+        </div>
+
+        <table id="tablaAprobados">
+            <thead>
+                <tr>
+                    <th>Usuario</th><th>Contacto</th><th>Vehículo</th><th>Placas</th><th>Estado</th><th>Documentos</th><th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTablaAprobados"></tbody>
+        </table>
+    </div>
+    
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -138,6 +140,16 @@
         window.verImagen = function(url) {
             document.getElementById('imagenAmpliada').src = url;
             document.getElementById('visorImagen').style.display = 'flex';
+        };
+
+        // 🔥 FUNCIÓN PARA FORMATEAR LAS PLACAS EN EL BUSCADOR 🔥
+        window.formatearPlacasBuscador = function(input) {
+            let valor = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            let formateado = '';
+            if (valor.length > 0) formateado += valor.substring(0, 3);
+            if (valor.length > 3) formateado += '-' + valor.substring(3, 6);
+            if (valor.length > 6) formateado += '-' + valor.substring(6, 7);
+            input.value = formateado;
         };
 
         // 🔥 FUNCIÓN PARA BUSCAR POR PLACAS EN TIEMPO REAL 🔥
