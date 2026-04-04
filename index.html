@@ -86,6 +86,24 @@
             </tbody>
         </table>
     </div>
+    <div class="admin-container">
+        <h1>🚗 Solicitudes de Cambio de Vehículo</h1>
+        <p class="subtitulo">Usuarios activos solicitando actualizar su auto en el sistema.</p>
+        
+        <table id="tablaCambiosAuto">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Auto Actual</th>
+                    <th>NUEVO Auto (Solicitado)</th>
+                    <th>NUEVA Foto</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTablaCambios">
+            </tbody>
+        </table>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -176,6 +194,7 @@
                 </tr>
             `;
         }
+        
 
         function crearFilaRegistrado(datos, idUsuario) {
             let badgeEstado = "";
@@ -225,6 +244,88 @@
 
         cargarPendientes();
         cargarRegistrados();
+        // CARGAR SOLICITUDES DE CAMBIO DE AUTO
+        async function cargarSolicitudesAuto() {
+            const tabla = document.getElementById("cuerpoTablaCambios");
+            tabla.innerHTML = "<tr><td colspan='5' style='text-align:center;'>Buscando solicitudes...</td></tr>";
+            try {
+                // Buscamos usuarios que tengan el campo solicitudCarro.estado en pendiente
+                const q = query(collection(db, "usuarios"), where("solicitudCarro.estado", "==", "pendiente"));
+                const querySnapshot = await getDocs(q);
+                tabla.innerHTML = ""; 
+                
+                if (querySnapshot.empty) {
+                    tabla.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No hay solicitudes de cambio de auto en este momento.</td></tr>";
+                    return;
+                }
+                
+                querySnapshot.forEach((documento) => {
+                    const datos = documento.data();
+                    const req = datos.solicitudCarro;
+                    const idUsuario = documento.id;
+
+                    const fila = `
+                        <tr style="background-color: #fff9e6;">
+                            <td><strong>${datos.nombre}</strong><br>${datos.correo}</td>
+                            <td style="color: gray;">${datos.modeloAuto} (${datos.colorAuto})<br>Placas: ${datos.placas}</td>
+                            <td style="color: #152191; font-weight: bold;">${req.modelo} (${req.color})<br>Año: ${req.anio}<br>Placas: ${req.placas}</td>
+                            <td style="text-align: center;">
+                                <img src="${req.fotoUrl}" class="img-zoom" onclick="verImagen('${req.fotoUrl}')" title="Ver Nuevo Auto">
+                            </td>
+                            <td>
+                                <button class="btn-aprobar" onclick="aprobarCambioAuto('${idUsuario}')">✅ Aprobar Cambio</button>
+                                <button class="btn-rechazar" onclick="rechazarCambioAuto('${idUsuario}')">❌ Rechazar</button>
+                            </td>
+                        </tr>
+                    `;
+                    tabla.innerHTML += fila;
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // APROBAR CAMBIO DE AUTO (MAGIA AUTOMÁTICA)
+        window.aprobarCambioAuto = async function(id) {
+            if(confirm("¿Estás seguro de APROBAR este cambio? El auto viejo será borrado y reemplazado.")) {
+                try {
+                    const docSnap = await getDocs(query(collection(db, "usuarios"))); // Modo simplificado
+                    let solicitudNueva = null;
+                    
+                    // Extraer los datos de la solicitud
+                    docSnap.forEach(d => { if(d.id === id) solicitudNueva = d.data().solicitudCarro; });
+
+                    if(solicitudNueva) {
+                        // Actualizamos el documento reemplazando los datos viejos
+                        await updateDoc(doc(db, "usuarios", id), {
+                            modeloAuto: solicitudNueva.modelo,
+                            colorAuto: solicitudNueva.color,
+                            anioAuto: solicitudNueva.anio,
+                            placas: solicitudNueva.placas,
+                            fotoCarroUrl: solicitudNueva.fotoUrl,
+                            "solicitudCarro.estado": "aprobado" // Lo marcamos para que desaparezca de la tabla
+                        });
+                        alert("✅ El vehículo fue actualizado exitosamente en el perfil del usuario.");
+                        cargarSolicitudesAuto(); // Recargamos
+                        cargarRegistrados(); // Actualizamos la tabla general
+                    }
+                } catch (error) { alert("Error: " + error.message); }
+            }
+        }
+
+        // RECHAZAR CAMBIO
+        window.rechazarCambioAuto = async function(id) {
+            if(confirm("¿RECHAZAR esta solicitud? El usuario mantendrá su auto actual.")) {
+                try {
+                    await updateDoc(doc(db, "usuarios", id), { "solicitudCarro.estado": "rechazado" });
+                    cargarSolicitudesAuto();
+                } catch (error) { alert("Error: " + error.message); }
+            }
+        }
+
+        // AGREGAR ESTO AL FINAL DE TUS INICIADORES
+        cargarSolicitudesAuto();
+        
     </script>
 </body>
 </html>
