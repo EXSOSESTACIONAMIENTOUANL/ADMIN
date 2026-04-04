@@ -22,7 +22,7 @@
         
         /* Buscador */
         .buscador-caja { display: flex; gap: 15px; margin-bottom: 20px; justify-content: center; align-items: center; background: #eef2f5; padding: 15px; border-radius: 10px; }
-        .buscador-caja input { padding: 8px; border-radius: 5px; border: 1px solid #ccc; outline: none; }
+        .buscador-caja input { padding: 8px; border-radius: 5px; border: 1px solid #ccc; outline: none; font-size: 14px; }
         .btn-buscar { background: #5865f2; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-limpiar { background: #ed4245; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         
@@ -55,6 +55,26 @@
             <tbody id="cuerpoTabla"></tbody>
         </table>
     </div>
+
+    <div class="admin-container">
+        <h1>👥 Usuarios Registrados</h1>
+        <p class="subtitulo">Gestiona el acceso de los usuarios que ya pasaron por revisión.</p>
+        
+        <div class="buscador-caja" style="margin-bottom: 15px;">
+            <label style="font-weight: bold; color: #152191;">Buscar por Placa:</label>
+            <input type="text" id="buscadorPlacas" placeholder="Ej. AAA-111-A" onkeyup="buscarPlacaRegistrados()" style="width: 250px; text-transform: uppercase;">
+        </div>
+
+        <table id="tablaAprobados">
+            <thead>
+                <tr>
+                    <th>Usuario</th><th>Contacto</th><th>Vehículo</th><th>Placas</th><th>Estado</th><th>Documentos</th><th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTablaAprobados"></tbody>
+        </table>
+    </div>
+
     <div class="admin-container">
         <h1>🚗 Solicitudes de Cambio de Vehículo</h1>
         <p class="subtitulo">Usuarios activos solicitando actualizar su auto en el sistema.</p>
@@ -97,20 +117,6 @@
             </tbody>
         </table>
     </div>
-    <div class="admin-container">
-        <h1>👥 Usuarios Registrados</h1>
-        <p class="subtitulo">Gestiona el acceso de los usuarios que ya pasaron por revisión.</p>
-        <table id="tablaAprobados">
-            <thead>
-                <tr>
-                    <th>Usuario</th><th>Contacto</th><th>Vehículo</th><th>Placas</th><th>Estado</th><th>Documentos</th><th>Acción</th>
-                </tr>
-            </thead>
-            <tbody id="cuerpoTablaAprobados"></tbody>
-        </table>
-    </div>
-
-
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -133,6 +139,26 @@
             document.getElementById('imagenAmpliada').src = url;
             document.getElementById('visorImagen').style.display = 'flex';
         };
+
+        // 🔥 FUNCIÓN PARA BUSCAR POR PLACAS EN TIEMPO REAL 🔥
+        window.buscarPlacaRegistrados = function() {
+            const input = document.getElementById("buscadorPlacas").value.toUpperCase();
+            const tabla = document.getElementById("cuerpoTablaAprobados");
+            const filas = tabla.getElementsByTagName("tr");
+
+            for (let i = 0; i < filas.length; i++) {
+                // La columna de Placas es la número 4 (índice 3)
+                const celdaPlaca = filas[i].getElementsByTagName("td")[3];
+                if (celdaPlaca) {
+                    const textoPlaca = celdaPlaca.textContent || celdaPlaca.innerText;
+                    if (textoPlaca.toUpperCase().indexOf(input) > -1) {
+                        filas[i].style.display = "";
+                    } else {
+                        filas[i].style.display = "none";
+                    }
+                }
+            }
+        }
 
         async function cargarPendientes() {
             const tabla = document.getElementById("cuerpoTabla");
@@ -232,7 +258,7 @@
             }
         }
 
-        // 🔥 LÓGICA DEL BUSCADOR DE HISTORIAL 🔥
+        // LÓGICA DEL BUSCADOR DE HISTORIAL
         window.buscarHistorial = async function(esLimpieza = false) {
             const tabla = document.getElementById("cuerpoTablaHistorial");
             tabla.innerHTML = "<tr><td colspan='5' style='text-align:center;'>Cargando historial...</td></tr>";
@@ -242,11 +268,9 @@
 
             try {
                 let q;
-                // Si están buscando algo específico, traemos los registros ordenados
                 if (!esLimpieza && (fecha || hora)) {
                     q = query(collection(db, "historial_estacionamiento"), orderBy("timestampEntrada", "desc"));
                 } else {
-                    // Por defecto, traemos solo los últimos 5
                     q = query(collection(db, "historial_estacionamiento"), orderBy("timestampEntrada", "desc"), limit(5));
                 }
 
@@ -257,11 +281,8 @@
                 querySnapshot.forEach((documento) => {
                     const datos = documento.data();
 
-                    // Aplicamos los filtros de búsqueda
                     if (!esLimpieza) {
-                        if (fecha && datos.fechaEntrada !== fecha) return; // Si la fecha no es igual, lo esconde
-                        
-                        // Si buscaron hora, revisamos si coincide con la entrada o salida (ej. "14:30")
+                        if (fecha && datos.fechaEntrada !== fecha) return; 
                         if (hora) {
                             const horaEntradaValida = datos.horaEntrada && datos.horaEntrada.startsWith(hora);
                             const horaSalidaValida = datos.horaSalida && datos.horaSalida.startsWith(hora);
@@ -270,7 +291,6 @@
                     }
 
                     mostrados++;
-
                     const textoSalida = datos.horaSalida ? `${datos.fechaSalida} - ${datos.horaSalida}` : "<span style='color:#ff9800;'>Sigue en estacionamiento 🚗</span>";
                     const badgeEstado = datos.horaSalida ? "<span style='color:#00c853;'>Completado ✔️</span>" : "<span style='color:#ff9800; font-weight:bold;'>Sigue Adentro</span>";
 
@@ -302,11 +322,10 @@
             buscarHistorial(true);
         }
 
-        // Ejecutar funciones de arranque
         cargarPendientes();
         cargarRegistrados();
         cargarSolicitudesAuto();
-        buscarHistorial(true); // Carga los 5 primeros al abrir la página
+        buscarHistorial(true);
 
     </script>
 </body>
