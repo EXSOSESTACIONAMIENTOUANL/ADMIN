@@ -366,9 +366,8 @@ window.buscarHistorial = function(esLimpieza = false) {
 window.limpiarHistorial = function() {
     document.getElementById("filtroFecha").value = "";
     document.getElementById("filtroHora").value = "";
-    buscarHistorial(true);
 }
-
+   }
         // Ejecutar funciones de arranque
         cargarPendientes();
         cargarRegistrados();
