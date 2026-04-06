@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Administrador EXSOS - Control Total</title>
+    <title>Panel de Administrador EXSOS</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; padding: 20px; }
         .admin-container { max-width: 1200px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow-x: auto; margin-bottom: 30px; }
@@ -11,50 +11,76 @@
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #152191; color: white; }
-        
+
+        /* Botones */
         .btn-aprobar { background: #00c853; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 5px; width: 100%; transition: 0.2s;}
+        .btn-aprobar:hover { background: #009624; }
         .btn-rechazar { background: #ed4245; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s;}
+        .btn-rechazar:hover { background: #b82a2d; }
         .btn-inhabilitar { background: #ff9800; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s;}
-        
-        .buscador-caja { display: flex; gap: 15px; margin-bottom: 20px; justify-content: center; align-items: center; background: #eef2f5; padding: 15px; border-radius: 10px; flex-wrap: wrap; }
+        .btn-inhabilitar:hover { background: #e68a00; }
+
+        /* Buscador */
+        .buscador-caja { display: flex; gap: 15px; margin-bottom: 20px; justify-content: center; align-items: center; background: #eef2f5; padding: 15px; border-radius: 10px; }
         .buscador-caja input { padding: 8px; border-radius: 5px; border: 1px solid #ccc; outline: none; font-size: 14px; }
         .btn-buscar { background: #5865f2; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-limpiar { background: #ed4245; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        
-        .img-zoom { width: 80px; height: 50px; object-fit: cover; border-radius: 5px; border: 2px solid #ccc; cursor: zoom-in; }
+
+        /* Fotos */
+        .img-zoom {
+            width: 80px; height: 50px; object-fit: cover; border-radius: 5px; border: 2px solid #ccc;
+            cursor: zoom-in; transition: transform 0.2s ease, border-color 0.2s ease;
+        }
         .img-zoom:hover { transform: scale(1.1); border-color: #152191; }
-        .badge-adentro { background: #fff3e0; color: #ff9800; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
-        .badge-completado { background: #e8f5e9; color: #4caf50; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
+        .estado-activo { color: #00c853; font-weight: bold; }
+        .estado-inactivo { color: #ed4245; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="visorImagen" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; justify-content:center; align-items:center;">
         <span onclick="document.getElementById('visorImagen').style.display='none'" style="position:absolute; top:20px; right:30px; color:white; font-size:45px; cursor:pointer; font-weight:bold;">&times;</span>
-        <img id="imagenAmpliada" src="" style="max-width:90%; max-height:90%; border-radius:10px;">
+        <img id="imagenAmpliada" src="" style="max-width:90%; max-height:90%; border-radius:10px; box-shadow:0 0 30px rgba(0,0,0,0.8);">
     </div>
 
     <div class="admin-container">
-        <h1>🛠️ Solicitudes de Registro</h1>
+        <h1>🛠️ Solicitudes Pendientes</h1>
+        <p class="subtitulo">Revisa documentos y datos antes de dar acceso.</p>
         <table id="tablaUsuarios">
-            <thead><tr><th>Usuario</th><th>Contacto</th><th>Vehículo</th><th>Documentos</th><th>Acción</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Usuario</th><th>Contacto</th><th>Matrícula</th><th>Vehículo</th><th>Placas</th><th>Documentos</th><th>Acción</th>
+                </tr>
+            </thead>
             <tbody id="cuerpoTabla"></tbody>
+        </table>
+    </div>
+    <div class="admin-container">
+        <h1>🚗 Solicitudes de Cambio de Vehículo</h1>
+        <p class="subtitulo">Usuarios activos solicitando actualizar su auto en el sistema.</p>
+        <table id="tablaCambiosAuto">
+            <thead>
+                <tr>
+                    <th>Usuario</th><th>Auto Actual</th><th>NUEVO Auto (Solicitado)</th><th>NUEVA Foto</th><th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTablaCambios"></tbody>
         </table>
     </div>
 
     <div class="admin-container">
-        <h1>📋 Bitácora de Accesos en Tiempo Real</h1>
-        <p class="subtitulo">Si filtras por hora, verás quiénes estaban dentro en ese momento exacto.</p>
-        
+        <h1>📋 Bitácora de Accesos</h1>
+        <p class="subtitulo">Visualiza los últimos 5 movimientos o usa el buscador para una fecha y hora específica.</p>
+
         <div class="buscador-caja">
-            <label>Fecha:</label>
+            <label style="font-weight: bold; color: #152191;">Fecha:</label>
             <input type="date" id="filtroFecha">
 
-            <label>¿Quién estaba a las?:</label>
+            <label style="font-weight: bold; color: #152191;">Hora (Opcional):</label>
             <input type="time" id="filtroHora">
 
-            <button class="btn-buscar" onclick="buscarHistorial()">🔍 Filtrar Bitácora</button>
-            <button class="btn-limpiar" onclick="limpiarHistorial()">✖ Ver Recientes</button>
+            <button class="btn-buscar" onclick="buscarHistorial()">🔍 Buscar</button>
+            <button class="btn-limpiar" onclick="limpiarHistorial()">✖ Ver Últimos 5</button>
         </div>
 
         <table id="tablaHistorial">
@@ -62,127 +88,293 @@
                 <tr>
                     <th>Usuario</th>
                     <th>Placas</th>
-                    <th>Entrada</th>
-                    <th>Salida</th>
-                    <th>Estado</th>
+                    <th>Entrada (Fecha y Hora)</th>
+                    <th>Salida (Fecha y Hora)</th>
+                    <th>Estado Actual</th>
                 </tr>
             </thead>
-            <tbody id="cuerpoTablaHistorial"></tbody>
+            <tbody id="cuerpoTablaHistorial">
+            </tbody>
         </table>
     </div>
 
+    <div class="admin-container">
+        <h1>👥 Usuarios Registrados</h1>
+        <p class="subtitulo">Gestiona el acceso de los usuarios que ya pasaron por revisión.</p>
+
+        <div class="buscador-caja" style="margin-bottom: 15px;">
+            <label style="font-weight: bold; color: #152191;">Buscar por Placa:</label>
+            <input type="text" id="buscadorPlacas" placeholder="Ej. AAA-111-A" oninput="formatearPlacasBuscador(this); buscarPlacaRegistrados()" style="width: 250px; text-transform: uppercase;">
+        </div>
+
+        <table id="tablaAprobados">
+            <thead>
+                <tr>
+                    <th>Usuario</th><th>Contacto</th><th>Vehículo</th><th>Placas</th><th>Estado</th><th>Documentos</th><th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTablaAprobados"></tbody>
+        </table>
+    </div>
+
+
+
+
     <script type="module">
+        // 🔥 IMPORTAMOS onSnapshot PARA EL TIEMPO REAL 🔥
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, doc, updateDoc, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyB8LeQ1UNG6XqOpVWAMyde05JOvlWRENvU",
-            authDomain: "exsos-login.firebaseapp.com",
-            projectId: "exsos-login",
-            storageBucket: "exsos-login.firebasestorage.app",
-            messagingSenderId: "254157261321",
-            appId: "1:254157261321:web:449f88c3567303afa846d8"
+            apiKey: "AIzaSyDr2FUS2IBW90alkYnAUUXvMNy2RQPjx6E",
+            authDomain: "ptueba-1-78027.firebaseapp.com",
+            projectId: "ptueba-1-78027",
+            storageBucket: "ptueba-1-78027.firebasestorage.app",
+            messagingSenderId: "463811943830",
+            appId: "1:463811943830:web:f529bdf1eea53445b0d1b7",
+            measurementId: "G-W5TBQT1DLK"
+          apiKey: "AIzaSyB8LeQ1UNG6XqOpVWAMyde05JOvlWRENvU",
+          authDomain: "exsos-login.firebaseapp.com",
+          projectId: "exsos-login",
+          storageBucket: "exsos-login.firebasestorage.app",
+          messagingSenderId: "254157261321",
+          appId: "1:254157261321:web:449f88c3567303afa846d8",
+          measurementId: "G-35YQC4CCDH"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- FUNCIÓN DE BITÁCORA EN TIEMPO REAL CON FILTRO DE RANGO ---
-        let desuscribirHistorial = null;
+        window.verImagen = function(url) {
+            document.getElementById('imagenAmpliada').src = url;
+            document.getElementById('visorImagen').style.display = 'flex';
+        };
 
-        window.buscarHistorial = function(soloRecientes = false) {
-            const tabla = document.getElementById("cuerpoTablaHistorial");
-            const fechaFiltro = document.getElementById("filtroFecha").value;
-            const horaFiltro = document.getElementById("filtroHora").value;
+        window.formatearPlacasBuscador = function(input) {
+            let valor = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            let formateado = '';
+            if (valor.length > 0) formateado += valor.substring(0, 3);
+            if (valor.length > 3) formateado += '-' + valor.substring(3, 6);
+            if (valor.length > 6) formateado += '-' + valor.substring(6, 7);
+            input.value = formateado;
+        };
 
-            // Si ya hay un vigilante activo, lo apagamos para crear uno nuevo
-            if (desuscribirHistorial) desuscribirHistorial();
+        window.buscarPlacaRegistrados = function() {
+            const input = document.getElementById("buscadorPlacas").value.toUpperCase();
+            const tabla = document.getElementById("cuerpoTablaAprobados");
+            const filas = tabla.getElementsByTagName("tr");
 
-            // Consulta base: Ordenar por lo más nuevo
-            let q = query(collection(db, "historial_estacionamiento"), orderBy("timestampEntrada", "desc"));
-            
-            if (soloRecientes) q = query(q, limit(10));
-
-            // Escuchar cambios EN TIEMPO REAL
-            desuscribirHistorial = onSnapshot(q, (snapshot) => {
-                tabla.innerHTML = "";
-                let contador = 0;
-
-                snapshot.forEach((doc) => {
-                    const d = doc.data();
-                    
-                    // LÓGICA DE FILTRO POR RANGO DE TIEMPO
-                    if (!soloRecientes) {
-                        // Filtro de Fecha
-                        if (fechaFiltro && d.fechaEntrada !== fechaFiltro) return;
-
-                        // Filtro de Hora (Rango: entrada <= filtro < salida)
-                        if (horaFiltro) {
-                            const horaF = horaFiltro.replace(":", "");
-                            const horaE = d.horaEntrada.replace(/:/g, "").substring(0, 4);
-                            const horaS = d.horaSalida ? d.horaSalida.replace(/:/g, "").substring(0, 4) : "2359";
-
-                            // Si la hora buscada no está entre la entrada y la salida, ignorar
-                            if (!(horaF >= horaE && horaF <= horaS)) return;
-                        }
+            for (let i = 0; i < filas.length; i++) {
+                const celdaPlaca = filas[i].getElementsByTagName("td")[3];
+                if (celdaPlaca) {
+                    const textoPlaca = celdaPlaca.textContent || celdaPlaca.innerText;
+                    if (textoPlaca.toUpperCase().indexOf(input) > -1) {
+                        filas[i].style.display = "";
+                    } else {
+                        filas[i].style.display = "none";
                     }
+                }
+            }
+        }
 
-                    contador++;
-                    const salidaTxt = d.horaSalida ? `${d.fechaSalida} - ${d.horaSalida}` : "<b>DENTRO DEL ESTACIONAMIENTO</b>";
-                    const estadoBadge = d.horaSalida ? `<span class="badge-completado">FINALIZADO</span>` : `<span class="badge-adentro">EN CURSO</span>`;
+        // 🔥 CARGA EN TIEMPO REAL: PENDIENTES 🔥
+        function cargarPendientes() {
+            const tabla = document.getElementById("cuerpoTabla");
+            tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Cargando...</td></tr>";
 
-                    tabla.innerHTML += `
-                        <tr>
-                            <td>${d.nombre}</td>
-                            <td>${d.placas}</td>
-                            <td>${d.fechaEntrada} - ${d.horaEntrada}</td>
-                            <td>${salidaTxt}</td>
-                            <td>${estadoBadge}</td>
-                        </tr>
-                    `;
+            const q = query(collection(db, "usuarios"), where("estado", "==", "pendiente"));
+
+            onSnapshot(q, (querySnapshot) => {
+                tabla.innerHTML = ""; 
+                if (querySnapshot.empty) { tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No hay pendientes.</td></tr>"; return; }
+                querySnapshot.forEach((documento) => {
+                    const datos = documento.data();
+                    const fila = crearFilaPendiente(datos, documento.id);
+                    tabla.innerHTML += fila;
+                });
+            });
+        }
+
+        // 🔥 CARGA EN TIEMPO REAL: REGISTRADOS 🔥
+        function cargarRegistrados() {
+            const tabla = document.getElementById("cuerpoTablaAprobados");
+            tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Cargando...</td></tr>";
+
+            const q = query(collection(db, "usuarios"), where("estado", "in", ["aprobado", "inhabilitado"]));
+
+            onSnapshot(q, (querySnapshot) => {
+                tabla.innerHTML = ""; 
+                if (querySnapshot.empty) { tabla.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No hay usuarios.</td></tr>"; return; }
+                querySnapshot.forEach((documento) => {
+                    const datos = documento.data();
+                    const fila = crearFilaRegistrado(datos, documento.id);
+                    tabla.innerHTML += fila;
                 });
 
-                if (contador === 0) tabla.innerHTML = "<tr><td colspan='5' style='text-align:center;'>Sin resultados para este filtro.</td></tr>";
+                // Mantenemos el filtro de búsqueda aplicado si la tabla se actualiza sola
+                buscarPlacaRegistrados(); 
             });
-        };
+        }
 
-        window.limpiarHistorial = function() {
-            document.getElementById("filtroFecha").value = "";
-            document.getElementById("filtroHora").value = "";
-            buscarHistorial(true);
-        };
+        function crearFilaPendiente(datos, idUsuario) {
+            return `<tr>
+                    <td><strong>${datos.nombre}</strong><br><span style="color:gray; font-size:12px;">Nacimiento: ${datos.fechaNacimiento}</span></td>
+                    <td>${datos.correo}<br>${datos.telefono}</td><td>${datos.matricula || 'N/A'}</td>
+                    <td>${datos.modeloAuto} <br> ${datos.colorAuto} (${datos.anioAuto})</td><td><strong>${datos.placas}</strong></td>
+                    <td style="text-align: center;"><img src="${datos.fotoCarroUrl}" class="img-zoom" onclick="verImagen('${datos.fotoCarroUrl}')"><img src="${datos.ineUrl}" class="img-zoom" onclick="verImagen('${datos.ineUrl}')"></td>
+                    <td><button class="btn-aprobar" onclick="cambiarEstado('${idUsuario}', 'aprobado')">✅ Aprobar</button><button class="btn-rechazar" onclick="cambiarEstado('${idUsuario}', 'rechazado')">❌ Rechazar</button></td>
+                </tr>`;
+        }
 
-        // --- CARGA DE SOLICITUDES ---
-        function cargarPendientes() {
-            onSnapshot(query(collection(db, "usuarios"), where("estado", "==", "pendiente")), (snap) => {
-                const tabla = document.getElementById("cuerpoTabla");
-                tabla.innerHTML = "";
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    tabla.innerHTML += `
-                        <tr>
-                            <td>${d.nombre}</td>
-                            <td>${d.correo}</td>
-                            <td>${d.modeloAuto} (${d.placas})</td>
-                            <td><img src="${d.fotoCarroUrl}" class="img-zoom" onclick="verImagen('${d.fotoCarroUrl}')"></td>
-                            <td><button class="btn-aprobar" onclick="cambiarEstado('${doc.id}', 'aprobado')">Aprobar</button></td>
+        function crearFilaRegistrado(datos, idUsuario) {
+            let badgeEstado = datos.estado === "aprobado" ? "<span class='estado-activo'>ACTIVO</span>" : "<span class='estado-inactivo'>INHABILITADO</span>";
+            let botonAccion = datos.estado === "aprobado" ? `<button class="btn-inhabilitar" onclick="cambiarEstado('${idUsuario}', 'inhabilitado')">🚫 Inhabilitar</button>` : `<button class="btn-aprobar" onclick="cambiarEstado('${idUsuario}', 'aprobado')">✅ Reactivar</button>`;
+            return `<tr style="background-color: ${datos.estado === 'inhabilitado' ? '#ffebee' : 'transparent'};">
+                    <td><strong>${datos.nombre}</strong><br><span style="color:gray; font-size:12px;">Matrícula: ${datos.matricula || 'N/A'}</span></td>
+                    <td>${datos.correo}<br>${datos.telefono}</td><td>${datos.modeloAuto} (${datos.colorAuto})</td><td><strong>${datos.placas}</strong></td><td>${badgeEstado}</td>
+                    <td style="text-align: center;"><img src="${datos.fotoCarroUrl}" class="img-zoom" onclick="verImagen('${datos.fotoCarroUrl}')"><img src="${datos.ineUrl}" class="img-zoom" onclick="verImagen('${datos.ineUrl}')"></td>
+                    <td>${botonAccion}</td></tr>`;
+        }
+
+        window.cambiarEstado = async function(id, nuevoEstado) {
+            if(confirm(`¿Seguro de marcar este usuario como ${nuevoEstado.toUpperCase()}?`)) {
+                await updateDoc(doc(db, "usuarios", id), { estado: nuevoEstado });
+                // Ya no necesitamos llamar a cargarPendientes() aquí, onSnapshot lo hace solo.
+            }
+        }
+
+        // 🔥 CARGA EN TIEMPO REAL: SOLICITUDES DE AUTO 🔥
+        function cargarSolicitudesAuto() {
+            const tabla = document.getElementById("cuerpoTablaCambios");
+            const q = query(collection(db, "usuarios"), where("solicitudCarro.estado", "==", "pendiente"));
+
+            onSnapshot(q, (qs) => {
+                tabla.innerHTML = ""; 
+                if (qs.empty) { tabla.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No hay solicitudes.</td></tr>"; return; }
+                qs.forEach((documento) => {
+                    const d = documento.data(); const req = d.solicitudCarro;
+                    tabla.innerHTML += `<tr style="background-color: #fff9e6;">
+                            <td><strong>${d.nombre}</strong><br>${d.correo}</td>
+                            <td style="color: gray;">${d.modeloAuto} (${d.colorAuto})<br>Placas: ${d.placas}</td>
+                            <td style="color: #152191; font-weight: bold;">${req.modelo} (${req.color})<br>Año: ${req.anio}<br>Placas: ${req.placas}</td>
+                            <td style="text-align: center;"><img src="${req.fotoUrl}" class="img-zoom" onclick="verImagen('${req.fotoUrl}')"></td>
+                            <td><button class="btn-aprobar" onclick="aprobarCambioAuto('${documento.id}')">✅ Aprobar Cambio</button><button class="btn-rechazar" onclick="rechazarCambioAuto('${documento.id}')">❌ Rechazar</button></td>
                         </tr>`;
                 });
             });
         }
 
-        window.cambiarEstado = async (id, estado) => {
-            await updateDoc(doc(db, "usuarios", id), { estado: estado });
-        };
+        window.aprobarCambioAuto = async function(id) {
+            if(confirm("¿APROBAR cambio? El auto viejo será borrado.")) {
+                const docSnap = await getDocs(query(collection(db, "usuarios")));
+                let req = null; docSnap.forEach(d => { if(d.id === id) req = d.data().solicitudCarro; });
+                if(req) {
+                    await updateDoc(doc(db, "usuarios", id), {
+                        modeloAuto: req.modelo, colorAuto: req.color, anioAuto: req.anio,
+                        placas: req.placas, fotoCarroUrl: req.fotoUrl, "solicitudCarro.estado": "aprobado"
+                    });
+                }
+            }
+        }
 
-        window.verImagen = (url) => {
-            document.getElementById('imagenAmpliada').src = url;
-            document.getElementById('visorImagen').style.display = 'flex';
-        };
+        window.rechazarCambioAuto = async function(id) {
+            if(confirm("¿RECHAZAR solicitud?")) {
+                await updateDoc(doc(db, "usuarios", id), { "solicitudCarro.estado": "rechazado" });
+            }
+        }
 
-        // Iniciar todo
+        // 🔥 CARGA EN TIEMPO REAL: HISTORIAL 🔥
+// 🔥 CARGA EN TIEMPO REAL E INTELIGENTE: BITÁCORA 🔥
+let vigilanteHistorial = null; 
+
+window.buscarHistorial = function(esLimpieza = false) {
+    const tabla = document.getElementById("cuerpoTablaHistorial");
+    tabla.innerHTML = "<tr><td colspan='5' style='text-align:center;'>Buscando registros...</td></tr>";
+
+    const fechaBuscada = document.getElementById("filtroFecha").value;
+    const horaBuscada = document.getElementById("filtroHora").value; // Formato "HH:MM"
+
+    // Apagamos cualquier escucha previa para no duplicar procesos
+    if (vigilanteHistorial) {
+        vigilanteHistorial(); 
+    }
+
+    // Consulta base: Ordenar por los más recientes
+    let q = query(collection(db, "historial_estacionamiento"), orderBy("timestampEntrada", "desc"));
+
+    // Si es la vista inicial, solo mostramos los últimos 5 para no saturar
+    if (esLimpieza) {
+        q = query(q, limit(5));
+    }
+
+    // Escucha en tiempo real (onSnapshot)
+    vigilanteHistorial = onSnapshot(q, (querySnapshot) => {
+        tabla.innerHTML = ""; 
+        let mostrados = 0;
+
+        querySnapshot.forEach((documento) => {
+            const datos = documento.data();
+            
+            // --- LÓGICA DE FILTRADO ---
+            if (!esLimpieza) {
+                // 1. Filtrar por Fecha exacta
+                if (fechaBuscada && datos.fechaEntrada !== fechaBuscada) return;
+
+                // 2. Filtrar por Estancia (¿El vehículo estaba aquí a esta hora?)
+                if (horaBuscada) {
+                    const hBusca = horaBuscada;
+                    const hEntrada = datos.horaEntrada.substring(0, 5); // Tomamos HH:MM
+                    // Si no ha salido, comparamos contra la hora actual del sistema o final del día
+                    const hSalida = datos.horaSalida ? datos.horaSalida.substring(0, 5) : "23:59";
+
+                    // Regla: La hora buscada debe estar entre la entrada y la salida
+                    const estabaPresente = (hBusca >= hEntrada && hBusca <= hSalida);
+                    
+                    if (!estabaPresente) return;
+                }
+            }
+
+            mostrados++;
+            
+            // Si no hay hora de salida, mostramos el estado en tiempo real
+            const salidaInfo = datos.horaSalida 
+                ? `${datos.fechaSalida} - ${datos.horaSalida}` 
+                : "<span style='color:#ff9800; font-weight:bold;'>En estacionamiento 🚗</span>";
+            
+            const badgeEstado = datos.horaSalida 
+                ? "<span style='color:#00c853;'>Completado ✔️</span>" 
+                : "<span style='color:#ff9800;'>Activo</span>";
+
+            const fila = `
+                <tr>
+                    <td><strong>${datos.nombre}</strong></td>
+                    <td><strong>${datos.placas}</strong></td>
+                    <td>${datos.fechaEntrada} - ${datos.horaEntrada}</td>
+                    <td>${salidaInfo}</td>
+                    <td>${badgeEstado}</td>
+                </tr>
+            `;
+            tabla.innerHTML += fila;
+        });
+
+        if(mostrados === 0) {
+            tabla.innerHTML = "<tr><td colspan='5' style='text-align:center; color:red;'>No hay vehículos registrados en ese rango de tiempo.</td></tr>";
+        }
+    });
+}
+
+window.limpiarHistorial = function() {
+    document.getElementById("filtroFecha").value = "";
+    document.getElementById("filtroHora").value = "";
+    buscarHistorial(true);
+}
+
+        // Ejecutar funciones de arranque
         cargarPendientes();
+        cargarRegistrados();
+        cargarSolicitudesAuto();
         buscarHistorial(true);
+
     </script>
 </body>
 </html>
