@@ -126,13 +126,6 @@
         import { getFirestore, collection, getDocs, doc, updateDoc, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyDr2FUS2IBW90alkYnAUUXvMNy2RQPjx6E",
-            authDomain: "ptueba-1-78027.firebaseapp.com",
-            projectId: "ptueba-1-78027",
-            storageBucket: "ptueba-1-78027.firebasestorage.app",
-            messagingSenderId: "463811943830",
-            appId: "1:463811943830:web:f529bdf1eea53445b0d1b7",
-            measurementId: "G-W5TBQT1DLK"
           apiKey: "AIzaSyB8LeQ1UNG6XqOpVWAMyde05JOvlWRENvU",
           authDomain: "exsos-login.firebaseapp.com",
           projectId: "exsos-login",
@@ -366,8 +359,9 @@ window.buscarHistorial = function(esLimpieza = false) {
 window.limpiarHistorial = function() {
     document.getElementById("filtroFecha").value = "";
     document.getElementById("filtroHora").value = "";
+    buscarHistorial(true);
 }
-   }
+   
         // Ejecutar funciones de arranque
         cargarPendientes();
         cargarRegistrados();
